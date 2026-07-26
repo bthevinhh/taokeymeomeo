@@ -65,6 +65,23 @@
     border-color: #38bdf8;
   }
   .dash-mid { color: #64748b; font-size: 20px; font-weight: bold; }
+  input[type="text"] {
+    width: 100%;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #38bdf8;
+    padding: 10px 4px;
+    outline: none;
+  }
+  input[type="text"]:focus {
+    border-color: #38bdf8;
+  }
   input[type="number"] {
     width: 100%;
     background: #0f172a;
@@ -156,12 +173,13 @@
   <h1>🔑 Trình Tạo Key</h1>
 
   <div class="field">
-    <label>Phần đầu (tự nhập)</label>
-    <div class="prefix-row">
-      <input type="text" id="prefix1" maxlength="6" placeholder="ABC (để trống = tự tạo)">
-      <span class="dash-mid">-</span>
-      <input type="text" id="prefix2" maxlength="6" placeholder="XYZ (để trống = tự tạo)">
-    </div>
+    <label>Phần X (tối đa 6 ký tự, để trống = tự tạo)</label>
+    <input type="text" id="prefixX" maxlength="6" placeholder="X">
+  </div>
+
+  <div class="field">
+    <label>Phần Y (tối đa 3 ký tự, phần còn lại Z sẽ random để Y+Z = 6)</label>
+    <input type="text" id="prefixY" maxlength="3" placeholder="Y">
   </div>
 
   <div class="field">
@@ -175,7 +193,7 @@
   <div id="errorMsg" class="error"></div>
   <div class="result-box" id="resultBox"></div>
 
-  <div class="note">2 ô đầu tự nhập tối đa 6 ký tự (để trống sẽ tự tạo ngẫu nhiên) — phần cuối luôn 6 ký tự ngẫu nhiên, không trùng nhau</div>
+  <div class="note">Định dạng: X-YZ (X tối đa 6 ký tự, Y tối đa 3 ký tự do bạn nhập, Z tự sinh ngẫu nhiên sao cho Y+Z = 6, không trùng nhau)</div>
 </div>
 
 <script>
@@ -189,10 +207,10 @@
     return result;
   }
 
-  function generateUniqueSuffixes(count) {
+  function generateUniqueZParts(count, zLen) {
     const set = new Set();
     while (set.size < count) {
-      set.add(randomPart(6));
+      set.add(randomPart(zLen));
     }
     return Array.from(set);
   }
@@ -203,13 +221,13 @@
     const errorMsg = document.getElementById('errorMsg');
     errorMsg.textContent = '';
 
-    let p1 = document.getElementById('prefix1').value.trim().toUpperCase();
-    let p2 = document.getElementById('prefix2').value.trim().toUpperCase();
+    let x = document.getElementById('prefixX').value.trim().toUpperCase();
+    let y = document.getElementById('prefixY').value.trim().toUpperCase();
     const qty = parseInt(document.getElementById('qty').value, 10);
 
-    // Nếu để trống thì web tự tạo ngẫu nhiên (mặc định 3 ký tự)
-    if (!p1) p1 = randomPart(3);
-    if (!p2) p2 = randomPart(3);
+    // Nếu để trống X thì web tự tạo ngẫu nhiên (mặc định 3 ký tự)
+    if (!x) x = randomPart(3);
+    // Y có thể để trống (0 ký tự), không bắt buộc
 
     if (!qty || qty < 1) {
       errorMsg.textContent = 'Số lượng không hợp lệ.';
@@ -220,11 +238,12 @@
       return;
     }
 
-    document.getElementById('prefix1').value = p1;
-    document.getElementById('prefix2').value = p2;
+    document.getElementById('prefixX').value = x;
+    document.getElementById('prefixY').value = y;
 
-    const suffixes = generateUniqueSuffixes(qty);
-    currentKeys = suffixes.map(s => `${p1}-${p2}-${s}`);
+    const zLen = 6 - y.length; // đảm bảo Y + Z = 6
+    const zParts = generateUniqueZParts(qty, zLen);
+    currentKeys = zParts.map(z => `${x}-${y}${z}`);
 
     renderResults();
   }
