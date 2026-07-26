@@ -158,9 +158,9 @@
   <div class="field">
     <label>Phần đầu (tự nhập)</label>
     <div class="prefix-row">
-      <input type="text" id="prefix1" maxlength="3" placeholder="ABC">
+      <input type="text" id="prefix1" maxlength="6" placeholder="ABC (để trống = tự tạo)">
       <span class="dash-mid">-</span>
-      <input type="text" id="prefix2" maxlength="3" placeholder="XYZ">
+      <input type="text" id="prefix2" maxlength="6" placeholder="XYZ (để trống = tự tạo)">
     </div>
   </div>
 
@@ -175,7 +175,7 @@
   <div id="errorMsg" class="error"></div>
   <div class="result-box" id="resultBox"></div>
 
-  <div class="note">Định dạng: XXX-XXX-XXXXXX — phần cuối 6 ký tự ngẫu nhiên, không trùng nhau</div>
+  <div class="note">2 ô đầu tự nhập tối đa 6 ký tự (để trống sẽ tự tạo ngẫu nhiên) — phần cuối luôn 6 ký tự ngẫu nhiên, không trùng nhau</div>
 </div>
 
 <script>
@@ -207,10 +207,10 @@
     let p2 = document.getElementById('prefix2').value.trim().toUpperCase();
     const qty = parseInt(document.getElementById('qty').value, 10);
 
-    if (!p1 || !p2) {
-      errorMsg.textContent = 'Vui lòng nhập đủ 2 phần đầu.';
-      return;
-    }
+    // Nếu để trống thì web tự tạo ngẫu nhiên (mặc định 3 ký tự)
+    if (!p1) p1 = randomPart(3);
+    if (!p2) p2 = randomPart(3);
+
     if (!qty || qty < 1) {
       errorMsg.textContent = 'Số lượng không hợp lệ.';
       return;
