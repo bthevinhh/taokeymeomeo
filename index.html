@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trình Tạo Key</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #f1f5f9;
+    padding: 40px 16px;
+  }
+  .card {
+    background: #1e293bcc;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 460px;
+    max-width: 92vw;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 24px;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+  }
+  .prefix-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .prefix-row input[type="text"] {
+    flex: 1;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #38bdf8;
+    padding: 10px 4px;
+    outline: none;
+    width: 0;
+  }
+  .prefix-row input[type="text"]:focus {
+    border-color: #38bdf8;
+  }
+  .dash-mid { color: #64748b; font-size: 20px; font-weight: bold; }
+  input[type="number"] {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #f1f5f9;
+    padding: 10px 12px;
+    font-size: 15px;
+    outline: none;
+  }
+  input[type="number"]:focus { border-color: #38bdf8; }
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: 0.2s;
+  }
+  #genBtn {
+    background: #38bdf8;
+    color: #0f172a;
+  }
+  #genBtn:hover { background: #0ea5e9; }
+  #copyAllBtn {
+    background: #334155;
+    color: #f1f5f9;
+    margin-top: 10px;
+  }
+  #copyAllBtn:hover { background: #475569; }
+  .result-box {
+    margin-top: 20px;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #0f172a;
+  }
+  .key-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    font-family: 'Consolas', monospace;
+    font-size: 14px;
+    color: #38bdf8;
+    border-bottom: 1px solid #1e293b;
+  }
+  .key-item:last-child { border-bottom: none; }
+  .key-item span.idx {
+    color: #64748b;
+    font-family: inherit;
+    margin-right: 8px;
+    font-size: 12px;
+    width: 24px;
+  }
+  .key-item .k { flex: 1; }
+  .copy-one {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 12px;
+    width: auto;
+    margin: 0;
+    padding: 2px 6px;
+  }
+  .copy-one:hover { color: #38bdf8; background: none; }
+  .note {
+    margin-top: 14px;
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+  }
+  .error {
+    color: #f87171;
+    font-size: 13px;
+    margin-top: 8px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🔑 Trình Tạo Key</h1>
+
+  <div class="field">
+    <label>Phần đầu (tự nhập)</label>
+    <div class="prefix-row">
+      <input type="text" id="prefix1" maxlength="3" placeholder="ABC">
+      <span class="dash-mid">-</span>
+      <input type="text" id="prefix2" maxlength="3" placeholder="XYZ">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Số lượng key cần tạo</label>
+    <input type="number" id="qty" min="1" max="10000" value="20">
+  </div>
+
+  <button id="genBtn">Tạo Key</button>
+  <button id="copyAllBtn">Sao chép tất cả</button>
+
+  <div id="errorMsg" class="error"></div>
+  <div class="result-box" id="resultBox"></div>
+
+  <div class="note">Định dạng: XXX-XXX-XXXXXX — phần cuối 6 ký tự ngẫu nhiên, không trùng nhau</div>
+</div>
+
+<script>
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // bỏ ký tự dễ nhầm (0,O,1,I)
+
+  function randomPart(len) {
+    let result = '';
+    for (let i = 0; i < len; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  }
+
+  function generateUniqueSuffixes(count) {
+    const set = new Set();
+    while (set.size < count) {
+      set.add(randomPart(6));
+    }
+    return Array.from(set);
+  }
+
+  let currentKeys = [];
+
+  function generateKeys() {
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.textContent = '';
+
+    let p1 = document.getElementById('prefix1').value.trim().toUpperCase();
+    let p2 = document.getElementById('prefix2').value.trim().toUpperCase();
+    const qty = parseInt(document.getElementById('qty').value, 10);
+
+    if (!p1 || !p2) {
+      errorMsg.textContent = 'Vui lòng nhập đủ 2 phần đầu.';
+      return;
+    }
+    if (!qty || qty < 1) {
+      errorMsg.textContent = 'Số lượng không hợp lệ.';
+      return;
+    }
+    if (qty > 500000) {
+      errorMsg.textContent = 'Số lượng quá lớn, vui lòng nhập nhỏ hơn.';
+      return;
+    }
+
+    document.getElementById('prefix1').value = p1;
+    document.getElementById('prefix2').value = p2;
+
+    const suffixes = generateUniqueSuffixes(qty);
+    currentKeys = suffixes.map(s => `${p1}-${p2}-${s}`);
+
+    renderResults();
+  }
+
+  function renderResults() {
+    const box = document.getElementById('resultBox');
+    box.innerHTML = '';
+    currentKeys.forEach((key, i) => {
+      const row = document.createElement('div');
+      row.className = 'key-item';
+      row.innerHTML = `<span class="idx">${i + 1}</span><span class="k">${key}</span><button class="copy-one" data-key="${key}">Copy</button>`;
+      box.appendChild(row);
+    });
+
+    box.querySelectorAll('.copy-one').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.dataset.key);
+        const old = btn.textContent;
+        btn.textContent = '✓';
+        setTimeout(() => (btn.textContent = old), 800);
+      });
+    });
+  }
+
+  document.getElementById('genBtn').addEventListener('click', generateKeys);
+
+  document.getElementById('copyAllBtn').addEventListener('click', () => {
+    if (currentKeys.length === 0) return;
+    navigator.clipboard.writeText(currentKeys.join('\n')).then(() => {
+      const btn = document.getElementById('copyAllBtn');
+      const old = btn.textContent;
+      btn.textContent = 'Đã sao chép ✓';
+      setTimeout(() => (btn.textContent = old), 1200);
+    });
+  });
+</script>
+
+</body>
+</html>
